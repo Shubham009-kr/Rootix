@@ -7,7 +7,7 @@ const FileTree = () => {
   const { tree } = explorer;
 
   return (
-    <div className="bg-gray-800 p-4 rounded-lg min-h-[300px]">
+    <div className="bg-gray-800 p-4 rounded-lg min-h-[300px] shadow-xl">
       {tree.length === 0 ? (
         <p className="text-gray-400">No files yet...</p>
       ) : (
