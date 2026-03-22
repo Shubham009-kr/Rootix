@@ -1,10 +1,15 @@
 import { v4 as uuidv4 } from "uuid";
 
 export const addNode = (tree, parentId, newNode) => {
+  if (!parentId) {
+    return [...tree, { ...newNode, id: uuidv4() }];
+  }
+
   return tree.map((node) => {
     if (node.id === parentId && node.type === "folder") {
       return {
         ...node,
+        isExpanded: true,
         children: [...node.children, { ...newNode, id: uuidv4() }],
       };
     }
@@ -44,6 +49,26 @@ export const toggleNode = (tree, nodeId) => {
       return {
         ...node,
         children: toggleNode(node.children, nodeId),
+      };
+    }
+
+    return node;
+  });
+};
+
+export const renameNode = (tree, nodeId, newName) => {
+  return tree.map((node) => {
+    if (node.id === nodeId) {
+      return {
+        ...node,
+        name: newName,
+      };
+    }
+
+    if (node.type === "folder") {
+      return {
+        ...node,
+        children: renameNode(node.children, nodeId, newName),
       };
     }
 
