@@ -1,16 +1,64 @@
 import { v4 as uuidv4 } from "uuid";
 
+/* 🧠 SORTING */
+const sortNodes = (nodes) => {
+  return nodes.sort((a, b) => {
+    if (a.type !== b.type) {
+      return a.type === "folder" ? -1 : 1;
+    }
+    return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+  });
+};
+
+/* 🧠 DUPLICATE HANDLING */
+const getUniqueName = (existingNodes, name) => {
+  let base = name;
+  let extension = "";
+
+  const dotIndex = name.lastIndexOf(".");
+  if (dotIndex !== -1) {
+    base = name.slice(0, dotIndex);
+    extension = name.slice(dotIndex);
+  }
+
+  let counter = 1;
+  let newName = name;
+
+  const existingNames = existingNodes.map((n) => n.name);
+
+  while (existingNames.includes(newName)) {
+    newName = `${base} (${counter})${extension}`;
+    counter++;
+  }
+
+  return newName;
+};
+
 export const addNode = (tree, parentId, newNode) => {
   if (!parentId) {
-    return [...tree, { ...newNode, id: uuidv4() }];
+    const uniqueName = getUniqueName(tree, newNode.name);
+
+    return sortNodes([
+      ...tree,
+      { ...newNode, id: uuidv4(), name: uniqueName },
+    ]);
   }
 
   return tree.map((node) => {
     if (node.id === parentId && node.type === "folder") {
+      const uniqueName = getUniqueName(node.children, newNode.name);
+
       return {
         ...node,
         isExpanded: true,
-        children: [...node.children, { ...newNode, id: uuidv4() }],
+        children: sortNodes([
+          ...node.children,
+          {
+            ...newNode,
+            id: uuidv4(),
+            name: uniqueName,
+          },
+        ]),
       };
     }
 
@@ -115,7 +163,6 @@ export const filterTree = (tree, searchQuery, fileType) => {
 
 /* 🚚 MOVE HELPERS */
 
-// Find node
 export const findNode = (tree, nodeId) => {
   for (let node of tree) {
     if (node.id === nodeId) return node;
@@ -128,7 +175,6 @@ export const findNode = (tree, nodeId) => {
   return null;
 };
 
-// Check if target is inside source (descendant check)
 export const isDescendant = (node, targetId) => {
   if (!node || node.type !== "folder") return false;
 
@@ -140,7 +186,6 @@ export const isDescendant = (node, targetId) => {
   return false;
 };
 
-// Move node
 export const moveNode = (tree, nodeId, targetFolderId) => {
   if (nodeId === targetFolderId) return tree;
 
@@ -150,17 +195,9 @@ export const moveNode = (tree, nodeId, targetFolderId) => {
   if (!nodeToMove || !targetFolder) return tree;
   if (targetFolder.type !== "folder") return tree;
 
-  // Prevent moving into its own child
   if (isDescendant(nodeToMove, targetFolderId)) return tree;
 
-  // Remove node
   const treeWithoutNode = deleteNode(tree, nodeId);
 
-  // Add node to new location
-  const updatedTree = addNode(treeWithoutNode, targetFolderId, {
-    ...nodeToMove,
-    id: undefined, // new id will be assigned
-  });
-
-  return updatedTree;
+  return addNode(treeWithoutNode, targetFolderId, nodeToMove);
 };
