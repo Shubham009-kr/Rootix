@@ -11,7 +11,14 @@ import TreeNode from "./TreeNode";
 import { toggleNode } from "../../utils/treeHelpers";
 
 const FolderNode = ({ node, level, explorer }) => {
-  const { tree, setTree, createNode, removeNode, updateNodeName } = explorer;
+  const {
+    tree,
+    setTree,
+    createNode,
+    removeNode,
+    updateNodeName,
+    moveItem,
+  } = explorer;
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(node.name);
@@ -26,6 +33,19 @@ const FolderNode = ({ node, level, explorer }) => {
     updateNodeName(node.id, name.trim());
     setIsEditing(false);
   };
+
+  const getFolders = (nodes) => {
+    let folders = [];
+    for (let n of nodes) {
+      if (n.type === "folder") {
+        folders.push(n);
+        folders = [...folders, ...getFolders(n.children)];
+      }
+    }
+    return folders;
+  };
+
+  const folders = getFolders(tree);
 
   return (
     <div>
@@ -62,18 +82,25 @@ const FolderNode = ({ node, level, explorer }) => {
           )}
         </div>
 
-        <div className="hidden group-hover:flex gap-2">
+        <div className="hidden group-hover:flex gap-2 items-center">
+          <select
+            onChange={(e) => moveItem(node.id, e.target.value)}
+            className="bg-gray-700 text-xs"
+          >
+            <option value="">Move</option>
+            {folders.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.name}
+              </option>
+            ))}
+          </select>
+
+          <Plus onClick={() => createNode(node.id, "newFile", "file")} />
           <Plus
-            size={16}
-            onClick={() => createNode(node.id, "newFile", "file")}
-          />
-          <Plus
-            size={16}
             className="text-green-400"
             onClick={() => createNode(node.id, "newFolder", "folder")}
           />
           <Trash2
-            size={16}
             className="text-red-400"
             onClick={() => removeNode(node.id)}
           />
@@ -86,7 +113,6 @@ const FolderNode = ({ node, level, explorer }) => {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
           >
             {node.children.map((child) => (
               <TreeNode

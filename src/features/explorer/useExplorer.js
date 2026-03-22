@@ -3,11 +3,14 @@ import {
   addNode,
   deleteNode,
   renameNode,
+  moveNode,
 } from "../../utils/treeHelpers";
 import { normalizeFileName } from "../../utils/fileHelpers";
 
 export const useExplorer = () => {
   const [tree, setTree] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [fileType, setFileType] = useState("");
 
   const createNode = (parentId, name, type) => {
     if (!name || name.trim() === "") return;
@@ -37,11 +40,20 @@ export const useExplorer = () => {
     setTree((prev) => renameNode(prev, nodeId, newName.trim()));
   };
 
+  const moveItem = (nodeId, targetFolderId) => {
+    setTree((prev) => moveNode(prev, nodeId, targetFolderId));
+  };
+
   return {
     tree,
+    setTree,
     createNode,
     removeNode,
     updateNodeName,
-    setTree,
+    moveItem,
+    searchQuery,
+    setSearchQuery,
+    fileType,
+    setFileType,
   };
 };
